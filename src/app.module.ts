@@ -8,6 +8,7 @@ import { databaseConfig } from './config/database.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
+      //configModule.forRoot is used for loading environmnt variables
       isGlobal: true,
       envFilePath: '.env', //makes sure that your .env variables are availabe everywhere
     }),
