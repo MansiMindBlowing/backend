@@ -237,9 +237,10 @@ async googleLogin(googleUser: any) {
   let user = await this.userModel.findOne({
     where: { google_id: googleUser.google_id },
   });
-
+     let isNewUser = false;
   if (user) {
     // Existing Google user - just login
+     console.log('✅ Existing Google user found:', user.email);
     await user.update({
       last_login: new Date(),
       profile_picture: googleUser.profile_picture, // Update profile picture
@@ -275,14 +276,41 @@ async googleLogin(googleUser: any) {
         created_by: null,
         updated_by: null,
       });
+           isNewUser = true;
+      console.log('✅ New user created with ID:', user.id);
 
+      // 🎯 THIS IS THE CRITICAL PART
+      console.log('📧 Attempting to send welcome email...');
+      console.log('Email address:', user.email);
+      console.log('User name:', user.first_name);
       // Send welcome email
-      await this.emailService.sendWelcomeEmail(
-        user.email,
-        user.first_name || 'User',
-      );
+
+      try {
+        const emailResult = await this.emailService.sendWelcomeEmail(
+          user.email,
+          user.first_name || 'User',
+        );
+        
+        console.log('Email send result:', emailResult);
+        
+        if (emailResult) {
+          console.log('✅ Welcome email sent successfully!');
+        } else {
+          console.log('❌ Welcome email failed (returned false)');
+        }
+      } catch (emailError) {
+        console.error('❌ Welcome email error:', emailError);
+        console.error('Error stack:', emailError.stack);
+        // Don't throw - login should succeed even if email fails
+      }
+      // await this.emailService.sendWelcomeEmail(
+      //   user.email,
+      //   user.first_name || 'User',
+      // );
     }
   }
+
+  
 
   // Generate JWT token
   const payload = {

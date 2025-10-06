@@ -1,24 +1,41 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { emailConfig } from '../../config/email.config';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(EmailService.name);
 
-  constructor() {
+ 
+
+      constructor(private readonly configService: ConfigService) { 
+    
+    // Get all configs securely using ConfigService
+    const config = {
+      host: this.configService.get<string>('EMAIL_HOST'),
+      port: this.configService.get<number>('EMAIL_PORT'),
+      secure: this.configService.get<string>('EMAIL_SECURE') === 'true',
+      user: this.configService.get<string>('EMAIL_USER'),
+      pass: this.configService.get<string>('EMAIL_PASSWORD'),
+      from: {
+        email: this.configService.get<string>('EMAIL_FROM'),
+        name: this.configService.get<string>('EMAIL_FROM_NAME'),
+      },
+    };
+    this.logger.log(`SMTP User: ${config.user}`);
+this.logger.log(`SMTP Pass: ${config.pass ? 'LOADED' : 'MISSING'}`);
     this.transporter = nodemailer.createTransport({
-      host: emailConfig.host,
-      port: emailConfig.port,
-      secure: emailConfig.secure,
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
       auth: {
-        user: emailConfig.auth.user,
-        pass: emailConfig.auth.pass,
+        user: config.user,
+        pass: config.pass,
       },
     });
 
-    // Verify connection on startup
     this.verifyConnection();
   }
 
@@ -32,21 +49,22 @@ export class EmailService {
     }
   }
 
-  async sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+ 
+       async sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+    const fromName = this.configService.get<string>('EMAIL_FROM_NAME');
+    const fromEmail = this.configService.get<string>('EMAIL_FROM');
+    
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const info = await this.transporter.sendMail({
-        from: `"${emailConfig.from.name}" <${emailConfig.from.email}>`,
+        from: `"${fromName}" <${fromEmail}>`,
         to,
         subject,
         html,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       this.logger.log(`✅ Email sent to ${to}: ${info.messageId}`);
       return true;
     } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       this.logger.error(`❌ Failed to send email to ${to}:`, error.message);
       return false;
     }
@@ -245,6 +263,16 @@ export class EmailService {
   }
 
   async sendWelcomeEmail(to: string, name: string): Promise<boolean> {
+     console.log('=== SEND WELCOME EMAIL DEBUG ===');
+  console.log('To:', to);
+  console.log('Name:', name);
+  console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+  
+  if (!this.transporter) {
+    console.error('❌ Email transporter is not initialized!');
+    console.error('Check EMAIL_HOST, EMAIL_USER, EMAIL_PASSWORD in .env');
+    return false;
+  }
     const html = `
       <!DOCTYPE html>
       <html>

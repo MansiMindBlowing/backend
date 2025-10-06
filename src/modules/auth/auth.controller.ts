@@ -123,5 +123,31 @@ async googleAuthCallback(@Req() req: any, @Res() res: Response) {
   }
 }
 
-
+@Get('test-welcome-email')
+async testWelcomeEmail(@Query('email') email: string) {
+  console.log('Testing welcome email to:', email || 'default test email');
+  
+  const testEmail = email || process.env.EMAIL_USER || 'test@example.com';
+  
+  try {
+    const result = await this.authService['emailService'].sendWelcomeEmail(
+      testEmail,
+      'Test User'
+    );
+    
+    return {
+      success: result,
+      message: result 
+        ? 'Test email sent! Check your inbox (and spam folder)' 
+        : 'Email sending failed - check server logs',
+      testedEmail: testEmail
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      stack: error.stack
+    };
+  }
+}
 }
