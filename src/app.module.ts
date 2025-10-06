@@ -33,6 +33,7 @@ import { FormField } from './models/form-fields.model';
 import { FormSubmission } from './models/form-submission.model';
 import { FieldResponse } from './models/field-response.model';
 import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
 // import { FormField } from './models/form-field.model';
 
 @Module({
@@ -46,6 +47,7 @@ import { UsersModule } from './modules/users/users.module';
       models: [User, Form, FormField, FormSubmission, FieldResponse], // Register all models
     }),
     UsersModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

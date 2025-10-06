@@ -1,0 +1,88 @@
+### ============================================
+### AUTHENTICATION TESTS
+### ============================================
+
+### 1. Register New User (Email/Password)
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "test123456",
+  "first_name": "Test",
+  "last_name": "User",
+  "role": "user"
+}
+
+### 2. Try to Login Without Email Verification (Should Fail)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "test123456"
+}
+
+### 3. Verify Email (Replace TOKEN with actual token from email)
+GET http://localhost:3000/auth/verify-email?token=YOUR_VERIFICATION_TOKEN_HERE
+
+### 4. Login After Verification (Should Work)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "test123456"
+}
+
+### 5. Get Current User (Protected Route - Requires Token)
+GET http://localhost:3000/auth/me
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### 6. Resend Verification Email
+POST http://localhost:3000/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com"
+}
+
+### ============================================
+### TEST CASES - VALIDATION ERRORS
+### ============================================
+
+### 7. Register with Invalid Email
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "notanemail",
+  "password": "test123"
+}
+
+### 8. Register with Short Password
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "123"
+}
+
+### 9. Register with Duplicate Email
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "test123456"
+}
+
+### 10. Login with Wrong Password
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "wrongpassword"
+}

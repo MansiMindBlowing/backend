@@ -1,0 +1,51 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { UsersService } from '../../users/users.service';
+
+// jwt stratgy it validates jwt token
+// strategy is authentication method
+
+// The JwtStrategy class extends PassportStrategy(Strategy) and is configured to:
+
+// Extract the JWT: It's set up to look for the JWT in the Authorization header of an incoming HTTP request, specifically using the Bearer token scheme (ExtractJwt.fromAuthHeaderAsBearerToken()).
+
+// Verify the Signature: It uses the secret key (secretOrKey) to cryptographically verify that the token hasn't been tampered with since it was issued. The secret is pulled from environment variables (process.env.JWT_SECRET) or defaults to a placeholder.
+
+// Check Expiration: It is configured not to ignore expiration (ignoreExpiration: false), meaning it will automatically reject tokens that have expired.
+
+// Validate the Payload (validate method): If the token is valid (not expired, correct signature), the validate method is called with the token's decoded payload.
+
+// It uses the sub (subject) field from the payload (which usually holds the user's ID) to fetch the user's details from the database via usersService.findById().
+
+// It performs additional checks, such as ensuring the user exists and that their account is active (user.is_active).
+
+// If validation fails at any point, it throws an UnauthorizedException.
+
+// If successful, it returns the user object. This user object is then attached to the request object, making the user's data accessible in your controllers.
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(private usersService: UsersService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),  //this line here is used to extract tiken from header
+      ignoreExpiration: false,
+      secretOrKey:
+        process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+    });
+  }
+
+  async validate(payload: any) {
+    const user = await this.usersService.findById(payload.sub);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!user.is_active) {
+      throw new UnauthorizedException('User account is inactive');
+    }
+
+    return user;
+  }
+}

@@ -8,6 +8,7 @@ export const databaseConfig: SequelizeModuleOptions = {
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_DATABASE || 'dynamic_forms_db',
   autoLoadModels: true,
-  synchronize: true, //can automatically update and create tables
+  synchronize: true,
+  sync: { force: true }, //can automatically update and create tables
   logging: console.log,
 };
