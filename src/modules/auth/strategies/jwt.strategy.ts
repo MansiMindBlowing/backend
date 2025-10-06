@@ -31,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),  //this line here is used to extract tiken from header
       ignoreExpiration: false,
       secretOrKey:
-        process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+        process.env.JWT_SECRET || '88ed733bb3166abdbb3cc6faf2ba4886',
     });
   }
 

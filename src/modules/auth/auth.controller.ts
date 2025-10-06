@@ -17,6 +17,9 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { User } from '../../models/user.model';
 import { AuthService } from '../services/auth.service';
+import { Req, Res } from '@nestjs/common';
+import { GoogleOAuthGuard } from './guards/google-oauth.guard';
+import type { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -74,4 +77,51 @@ export class AuthController {
       data: user,
     };
   }
+
+  @Get('google')
+@UseGuards(GoogleOAuthGuard)
+async googleAuth() {
+  // Initiates Google OAuth flow
+  // User will be redirected to Google login page
+}
+@Get('callback')
+handleAuthCallback(@Query('token') token: string, @Res() res: Response) {
+
+}
+@Get('google/callback')
+@UseGuards(GoogleOAuthGuard)
+//idhr pe type any temporary lagaya h ideally it should not be like this
+async googleAuthCallback(@Req() req: any, @Res() res: Response) {
+  // Handle Google OAuth callback
+  const googleUser = req.user;
+
+  try {
+    const result = await this.authService.googleLogin(googleUser);
+
+    // // Redirect to frontend with token
+    // const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    // const redirectUrl = `${frontendUrl}/auth/callback?token=${result.access_token}`;
+
+    // res.redirect(redirectUrl);
+
+     return res.json({
+      success: true,
+      message: 'Google authentication successful',
+      access_token: result.access_token,
+      user: {
+        email: googleUser?.emails,
+        firstName: googleUser?.firstName,
+        lastName: googleUser?.lastName,
+      }
+    });
+  } catch (error) {
+    // Redirect to frontend with error
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+    const redirectUrl = `${frontendUrl}/auth/error?message=${error.message}`;
+
+    res.redirect(redirectUrl);
+  }
+}
+
+
 }

@@ -228,4 +228,77 @@ export class AuthService {
 
     return user;
   }
+
+  /**
+ * Handle Google OAuth login/register
+ */
+async googleLogin(googleUser: any) {
+  // Check if user exists by google_id
+  let user = await this.userModel.findOne({
+    where: { google_id: googleUser.google_id },
+  });
+
+  if (user) {
+    // Existing Google user - just login
+    await user.update({
+      last_login: new Date(),
+      profile_picture: googleUser.profile_picture, // Update profile picture
+    });
+  } else {
+    // Check if email already exists (registered with email/password)
+    const existingEmailUser = await this.userModel.findOne({
+      where: { email: googleUser.email },
+    });
+
+    if (existingEmailUser) {
+      // Link Google account to existing email account
+      await existingEmailUser.update({
+        google_id: googleUser.google_id,
+        profile_picture: googleUser.profile_picture,
+        email_verified: true, // Google emails are already verified
+        last_login: new Date(),
+      });
+      user = existingEmailUser;
+    } else {
+      // Create new user from Google data
+      user = await this.userModel.create({
+        email: googleUser.email,
+        google_id: googleUser.google_id,
+        first_name: googleUser.first_name,
+        last_name: googleUser.last_name,
+        profile_picture: googleUser.profile_picture,
+        login_provider: 'google',
+        email_verified: true, // Google emails are already verified
+        password_hash: null, // No password for OAuth users
+        role: 'user',
+        last_login: new Date(),
+        created_by: null,
+        updated_by: null,
+      });
+
+      // Send welcome email
+      await this.emailService.sendWelcomeEmail(
+        user.email,
+        user.first_name || 'User',
+      );
+    }
+  }
+
+  // Generate JWT token
+  const payload = {
+    email: user.email,
+    sub: user.id,
+    role: user.role,
+  };
+
+  const access_token = this.jwtService.sign(payload);
+
+  // Return user and token
+  const { password_hash, ...userWithoutPassword } = user.toJSON();
+
+  return {
+    access_token,
+    user: userWithoutPassword,
+  };
+}
 }
