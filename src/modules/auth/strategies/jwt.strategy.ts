@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from '../../users/users.service';
@@ -26,6 +26,7 @@ import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
   constructor(private usersService: UsersService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),  //this line here is used to extract tiken from header
@@ -35,17 +36,74 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  // async validate(payload: any) {
+  //   const user = await this.usersService.findById(payload.sub);
+
+  //   if (!user) {
+  //     throw new UnauthorizedException('User not found');
+  //   }
+
+  //   if (!user.is_active) {
+  //     throw new UnauthorizedException('User account is inactive');
+  //   }
+
+  //   return user;
+  // }
+
+  //  async validate(payload: any) {
+  //   this.logger.debug(`JWT payload: ${JSON.stringify(payload)}`);
+
+  //   const userId = payload.sub ?? payload.id ?? payload.userId;
+  //   if (!userId) {
+  //     throw new UnauthorizedException('Invalid token payload');
+  //   }
+
+  //   const user = await this.usersService.findById(Number(userId)); // implement findById in UsersService
+  //   this.logger.debug('JwtStrategy found user: ' + JSON.stringify(user && {
+  //     id: user.id, email: user.email, role: user.role, is_active: user.is_active,
+  //   }));
+
+  //   if (!user) {
+  //     throw new UnauthorizedException('User not found');
+  //   }
+  //   if (!user.is_active) {
+  //     throw new UnauthorizedException('User account is inactive');
+  //   }
+
+  //   // return the user object (not the payload)
+  //   return user;
+  // }
+
   async validate(payload: any) {
-    const user = await this.usersService.findById(payload.sub);
+  this.logger.debug(`JWT payload: ${JSON.stringify(payload)}`);
 
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    if (!user.is_active) {
-      throw new UnauthorizedException('User account is inactive');
-    }
-
-    return user;
+  const userId = payload.sub ?? payload.id ?? payload.userId;
+  if (!userId) {
+    throw new UnauthorizedException('Invalid token payload');
   }
+
+  const userModelInstance = await this.usersService.findById(Number(userId));
+  // Convert Sequelize model -> plain object to avoid issues from "public class fields" shadowing
+  const user = (userModelInstance && typeof (userModelInstance as any).toJSON === 'function')
+    ? (userModelInstance as any).toJSON()
+    : userModelInstance;
+
+  this.logger.debug('JwtStrategy found user: ' + JSON.stringify({
+    id: user?.id,
+    email: user?.email,
+    role: user?.role,
+    is_active: user?.is_active,
+  }));
+
+  if (!user) {
+    throw new UnauthorizedException('User not found');
+  }
+  if (!user.is_active) {
+    throw new UnauthorizedException('User account is inactive');
+  }
+
+  // return plain object (ok for request.user)
+  return user;
+}
+
 }

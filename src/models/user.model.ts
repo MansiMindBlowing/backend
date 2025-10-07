@@ -11,7 +11,7 @@ import { Form } from './form.model';
   withoutPassword: {
     attributes: { 
       exclude: [
-        'password_hash', 
+        // 'password_hash', 
         'email_verification_token',
         'email_verification_token_expires',
         'password_reset_token',

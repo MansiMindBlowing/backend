@@ -30,8 +30,11 @@ export class AuthService {
    */
   async register(registerDto: RegisterDto) {
     // Check if user already exists
+    console.log('🚨 register() called for email:', registerDto.email);
+
     const existingUser = await this.userModel.findOne({
       where: { email: registerDto.email },
+      
     });
 
     if (existingUser) {
@@ -158,13 +161,26 @@ export class AuthService {
    */
   async login(loginDto: LoginDto) {
     // Find user
-    const user = await this.userModel.findOne({
-      where: { email: loginDto.email, is_deleted: false },
-    });
+    // const user = await this.userModel.findOne({
+    //   where: { email: loginDto.email, is_deleted: false },
+    //    attributes: { include: ['password_hash'] },
+    // });
+
+     const user = await this.userModel.unscoped().findOne({
+    where: { email: loginDto.email, is_deleted: false },
+    attributes: { include: ['password_hash'] },
+  });
+
+  console.log('🔍 User from DB:', user ? user.toJSON() : 'No user found');
+
+ 
+
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
+    console.log('🧩 Password hash from DB user.toJSON():', user.toJSON().password_hash);
+    console.log('🧩 Password hash from direct property:', user.password_hash);
 
     // Check if password exists (not OAuth user)
     if (!user.password_hash) {

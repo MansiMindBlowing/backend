@@ -15,7 +15,7 @@ export class UsersService {
   constructor(
     @InjectModel(User)
     private userModel: typeof User,
-  ) {}
+  ) { }
 
   // Register new user
   async register(createUserDto: CreateUserDto): Promise<Partial<User>> {
@@ -72,7 +72,12 @@ export class UsersService {
 
   // Find user by ID
   async findById(id: number): Promise<User> {
-    const user = await this.userModel.scope('withoutPassword').findByPk(id);
+     const user = await this.userModel.findByPk(id);
+    // const user = await this.userModel.scope('withoutPassword').findByPk(id);
+    // const user = await this.userModel.scope('withoutPassword').findByPk(id, {
+    //   attributes: { include: ['is_active', 'role'] }, // ✅ ensure these come through
+    //   // where: { is_deleted: false },
+    // });
 
     if (!user) {
       throw new NotFoundException('User not found');
