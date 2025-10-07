@@ -93,7 +93,7 @@ handleAuthCallback(@Query('token') token: string, @Res() res: Response) {
 //idhr pe type any temporary lagaya h ideally it should not be like this
 async googleAuthCallback(@Req() req: any, @Res() res: Response) {
   // Handle Google OAuth callback
-  const googleUser = req.user;
+  const googleUser = req.user; //ye user aaya h tmhara google strategy ke meta data se
 
   try {
     const result = await this.authService.googleLogin(googleUser);

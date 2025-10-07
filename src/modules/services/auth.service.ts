@@ -287,8 +287,8 @@ async googleLogin(googleUser: any) {
 
       try {
         const emailResult = await this.emailService.sendWelcomeEmail(
-          user.email,
-          user.first_name || 'User',
+           googleUser.email,           // ✅ Use googleUser.email
+      googleUser.first_name || 'User', 
         );
         
         console.log('Email send result:', emailResult);
